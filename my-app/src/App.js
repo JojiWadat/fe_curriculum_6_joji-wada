@@ -11,6 +11,7 @@ const App = () => {
         const unsubscribe = onAuthStateChanged(fireAuth, (user) => {
             setLoginUser(user); // ログイン状態を更新
         });
+
         return () => unsubscribe(); // コンポーネントがアンマウントされた際に監視を解除
     }, []);
 
