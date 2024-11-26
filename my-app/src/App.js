@@ -1,104 +1,100 @@
-import React, { useState, useEffect } from "react";
-import { onAuthStateChanged, signOut, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { fireAuth } from "./firebase.ts"; // Firebaseインスタンスをインポート
+import React, { useEffect, useState } from 'react';
+import './styles.css';
 
 const App = () => {
-    const [loginUser, setLoginUser] = useState(null); // ログイン状態を管理
-    const googleProvider = new GoogleAuthProvider(); // Google認証プロバイダー
+  const [users, setUsers] = useState([]);
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
+  const [error, setError] = useState('');
 
-    // ログイン状態を監視
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(fireAuth, (user) => {
-            setLoginUser(user); // ログイン状態を更新
-        });
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-        return () => unsubscribe(); // コンポーネントがアンマウントされた際に監視を解除
-    }, []);
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/user');
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      const data = await response.json();
+      setUsers(data);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load users');
+    }
+  };
 
-    /**
-     * Googleでログイン
-     */
-    const signInWithGoogle = () => {
-        signInWithPopup(fireAuth, googleProvider)
-            .then((result) => {
-                alert("Googleログイン成功: " + result.user.displayName);
-            })
-            .catch((err) => {
-                alert("Googleログイン失敗: " + err.message);
-            });
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
 
-    /**
-     * ログアウト
-     */
-    const handleSignOut = () => {
-        signOut(fireAuth)
-            .then(() => {
-                alert("ログアウトしました");
-            })
-            .catch((err) => {
-                alert("ログアウト失敗: " + err.message);
-            });
-    };
+    // バリデーション
+    if (!name || !age) {
+      setError('Name and age are required.');
+      return;
+    }
 
-    /**
-     * メール・パスワード認証用のフォーム
-     */
-    const LoginForm = () => {
-        const [email, setEmail] = useState("");
-        const [password, setPassword] = useState("");
+    if (age < 20 || age > 80) {
+      setError('Age must be between 20 and 80.');
+      return;
+    }
 
-        const handleLogin = () => {
-            fireAuth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    alert("ログイン成功: " + userCredential.user.email);
-                })
-                .catch((err) => {
-                    alert("ログイン失敗: " + err.message);
-                });
-        };
+    try {
+      const response = await fetch('http://localhost:8000/user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, age: parseInt(age) }),
+      });
 
-        return (
-            <div>
-                <h2>メール・パスワード認証</h2>
-                <input
-                    type="email"
-                    placeholder="メールアドレス"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
-                <input
-                    type="password"
-                    placeholder="パスワード"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-                <button onClick={handleLogin}>ログイン</button>
-            </div>
-        );
-    };
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add user');
+      }
 
-    return (
-        <div>
-            <h1>Firebase 認証 (Google & メール)</h1>
+      setName('');
+      setAge('');
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to add user');
+    }
+  };
 
-            {/* ログイン状態に応じてコンテンツを切り替え */}
-            {loginUser ? (
-                <div>
-                    <p>ようこそ、{loginUser.email || loginUser.displayName}さん！</p>
-                    <button onClick={handleSignOut}>ログアウト</button>
-                </div>
-            ) : (
-                <div>
-                    <LoginForm />
-                    <div>
-                        <h2>または</h2>
-                        <button onClick={signInWithGoogle}>Googleでログイン</button>
-                    </div>
-                </div>
-            )}
+  return (
+      <div className="container">
+        <h2>User List</h2>
+        {error && <div style={{ color: 'red' }}>{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div>
+            <input
+                type="text"
+                placeholder="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div>
+            <input
+                type="number"
+                placeholder="Age"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+            />
+          </div>
+          <button type="submit">Submit</button>
+        </form>
+        <div className="user-list">
+          {users.map((user) => (
+              <div key={user.id} className="user-item">
+                {user.name} - {user.age} years old
+              </div>
+          ))}
         </div>
-    );
+      </div>
+  );
 };
 
 export default App;
