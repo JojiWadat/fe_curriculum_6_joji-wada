@@ -7,23 +7,13 @@ const App = () => {
   const [age, setAge] = useState('');
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/user');
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-      const data = await response.json();
-      setUsers(data);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load users');
-    }
-  };
+    // ログイン状態を監視
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(fireAuth, (user) => {
+            setLoginUser(user); // ログイン状態を更新
+        });
+        return () => unsubscribe(); // コンポーネントがアンマウントされた際に監視を解除
+    }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
