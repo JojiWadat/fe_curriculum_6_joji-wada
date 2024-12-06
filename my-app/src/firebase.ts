@@ -2,12 +2,12 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAU68rH5ztIbw_JmHIqGaDn3I0lDXXciDE",
-    authDomain: "term6-joji-wada.firebaseapp.com",
-    projectId: "term6-joji-wada",
-    storageBucket: "term6-joji-wada.firebasestorage.app",
-    messagingSenderId: "612823786737",
-    appId: "1:612823786737:web:36f33a67fd61af2c7cb550"
+    apiKey: process.env.REACT_APP_API_KEY,
+    authDomain: process.env.REACT_APP_AUTH_DOMAIN,
+    projectId: process.env.REACT_APP_PROJECT_ID,
+    storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
+    messagingSenderId: process.env.REACT_APP_MESSAGEING_SENDER_ID,
+    appId: process.env.REACT_APP_APP_ID,
 };
 
 // Firebaseアプリの初期化
